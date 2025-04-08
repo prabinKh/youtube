@@ -9,7 +9,6 @@ from urllib.parse import urlparse, urlunparse
 
 def get_channel_id(youtube_url):
     """Extract channelId from YouTube channel page source."""
-    # Clean the URL (remove 'view-source:' prefix if present)
     clean_url = youtube_url.replace('view-source:', '')
     print(f"Fetching data from: {clean_url}")
 
@@ -19,16 +18,13 @@ def get_channel_id(youtube_url):
         res = requests.get(clean_url, headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
-        # Look for the channel ID in the meta tag
         channel_id = None
         meta_tag = soup.find('meta', property='og:url')
         if meta_tag and 'content' in meta_tag.attrs:
             url_content = meta_tag['content']
             if '/channel/' in url_content:
                 print(url_content)
-                channel_id = url_content.split('/channel/')[1].split('?')[0]  # Extract the ID
-
-        # Alternatively, look for the canonical link if the meta tag doesn't provide the ID
+                channel_id = url_content.split('/channel/')[1].split('?')[0]
         if not channel_id:
             link_tag = soup.find('link', rel='canonical')
             if link_tag and 'href' in link_tag.attrs:
@@ -60,21 +56,18 @@ def fetch_rss(channel_id, csv_file='media_urls.csv'):
 
         root = ET.fromstring(response.content)
 
-        # Namespace map
         ns = {
             'atom': 'http://www.w3.org/2005/Atom',
             'media': 'http://search.yahoo.com/mrss/',
             'yt': 'http://www.youtube.com/xml/schemas/2015'
         }
 
-        # Load existing URLs from the CSV
         existing_urls = set()
         if os.path.exists(csv_file):
             with open(csv_file, newline='', encoding='utf-8') as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    existing_urls.add(row[0])  # media:content URL is the first column
-
+                    existing_urls.add(row[0]) 
         new_urls = []
 
         for entry in root.findall('atom:entry', ns):
@@ -99,7 +92,6 @@ def fetch_rss(channel_id, csv_file='media_urls.csv'):
 
 def start_watching(youtube_url, interval=10):
     """Continuously check for new media content URLs every X seconds."""
-    # Extract the channel ID
     channel_id = get_channel_id(youtube_url)
     if not channel_id:
         print("❌ Exiting. Cannot fetch channel ID.")
@@ -110,7 +102,5 @@ def start_watching(youtube_url, interval=10):
         fetch_rss(channel_id)
         time.sleep(interval)
 
-# ---------- Entry Point ----------
 if __name__ == "__main__":
-    youtube_url = "https://www.youtube.com/@neeteshjkunwar"  # Replace this with any YouTube channel handle
-    start_watching(youtube_url)
+    youtube_url = "https://www.youtube.com/@neeteshjkunwar"  
